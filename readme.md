@@ -19,10 +19,10 @@ A Node.js bot for automating tasks in the YesCoin game.
    git clone https://github.com/ada682/yes-coin-bot.git
    cd yes-coin-bot
 
-#Install dependencies:
+# Install dependencies:
 npm install
 
-##Obtain your Bearer Token:
+## Obtain your Bearer Token:
 
 ``Open YesCoin in your browser.
 Right-click and select "Inspect" to open Developer Tools.
