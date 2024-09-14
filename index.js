@@ -4,7 +4,7 @@ const { displayLogo, displayAccountInfo, displayGameInfo, autoCollectCoins } = r
 
 class YesCoinBot {
     constructor() {
-        this.accounts = this.loadAccounts('user.txt');
+        this.accounts = this.loadAccounts('token.txt');
         this.tokens = this.loadTokens('token.json');
         this.cekTaskEnable = true;
         this.upgradeMultiEnable = true;
