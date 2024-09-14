@@ -24,12 +24,13 @@ npm install
 
 ## Obtain your Bearer Token:
 
-``Open YesCoin in your browser.
+```bash
+Open YesCoin in your browser.
 Right-click and select "Inspect" to open Developer Tools.
 Go to the "Application" tab.
 Navigate to "Session Storage" on the left sidebar.
 Locate the session storage item containing the Bearer token.
-Copy the token value and paste it into a file named token.txt in the root directory of your project.``
+Copy the token value and paste it into a file named token.txt in the root directory of your project
 
 ## Usage
 npm start
