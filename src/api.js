@@ -171,50 +171,6 @@ async function login(loginData) {
     }
 }
 
-async function getSkinList() {
-    try {
-        const response = await axiosInstance.get('/skin/getSkinList');
-        console.log('Skin list:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting skin list:', error.message);
-        throw error;
-    }
-}
-
-async function getAccountBuildInfo() {
-    try {
-        const response = await axiosInstance.get('/build/getAccountBuildInfo');
-        console.log('Account build info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting account build info:', error.message);
-        throw error;
-    }
-}
-
-async function getBuildItem() {
-    try {
-        const response = await axiosInstance.get('/tgStar/getBuildItem');
-        console.log('Build item info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting build item info:', error.message);
-        throw error;
-    }
-}
-
-async function getOfflineYesPacBonusInfo() {
-    try {
-        const response = await axiosInstance.get('/game/getOfflineYesPacBonusInfo');
-        console.log('Offline YesPac bonus info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting offline YesPac bonus info:', error.message);
-        throw error;
-    }
-}
-
 async function finishDailyMission(missionData) {
     try {
         const response = await axiosInstance.post('/mission/finishDailyMission', missionData);
@@ -240,9 +196,5 @@ module.exports = {
     collectSpecialBoxCoin,
     getWallet,
     login,
-    getSkinList,
-    getAccountBuildInfo,
-    getBuildItem,
-    getOfflineYesPacBonusInfo,
     finishDailyMission
 };
