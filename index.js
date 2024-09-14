@@ -227,7 +227,6 @@ class YesCoinBot {
                 await autoCollectCoins(token, 100000, 200);
             }
 
-            // Display summary at the end of each cycle
             console.log('==============================================');
             console.log(`Total accounts processed: ${this.accounts.length}`);
             console.log(`Total coins collected this cycle: ${totalCoins}`);
