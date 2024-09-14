@@ -10,6 +10,7 @@ A Node.js bot for automating tasks in the YesCoin game.
 - Perform tasks and upgrades
 - Collect coins and manage game resources
 - Handle special boxes and coin pool recovery
+- Give a table information about total account, total collect per cycle (acumulate) , total balance (acumulate) if multi account
 
 ## Installation
 
