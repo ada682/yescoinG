@@ -1,0 +1,36 @@
+# Node.js dependencies
+node_modules/
+
+# Log files
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# npm package-lock
+package-lock.json
+
+# macOS Finder metadata
+.DS_Store
+
+# Windows metadata
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Build output
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/
+
+# OS-specific files
+*.swp
+*.swo
