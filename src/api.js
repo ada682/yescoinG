@@ -26,18 +26,16 @@ async function loginWithTelegramApi(telegramAuthData) {
     try {
         console.log('[INFO] Data sent to YesCoin for login:', telegramAuthData);
 
-        // Format the id to be a string or simple number (if the API expects a string)
         const loginPayload = {
-            id: telegramAuthData.id.toString(),  // Convert BigInt to string
+            id: telegramAuthData.id.toString(),  
             first_name: telegramAuthData.first_name,
             username: telegramAuthData.username
         };
 
-        const apiBaseUrl = 'https://api-backend.yescoin.gold'; // Base URL for YesCoin API
+        const apiBaseUrl = 'https://api-backend.yescoin.gold'; 
         const response = await axios.post(`${apiBaseUrl}/user/login`, loginPayload);
         console.log("Response from YesCoin:", response.data);
 
-        // Check if the response contains a token
         if (response.data && response.data.token) {
             setToken(response.data.token);
             setupAxios(response.data.token);
