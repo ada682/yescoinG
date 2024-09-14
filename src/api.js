@@ -1,200 +1,206 @@
 const axios = require('axios');
-const fs = require('fs');
-const { getStoredToken, setToken } = require('./config');
+const { headers } = require('./headers');
 
-let axiosInstance = null;
-
-function setupAxios(token) {
-    axiosInstance = axios.create({
-        baseURL: 'https://api-backend.yescoin.gold',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Origin': 'https://www.yescoin.gold',
-            'Referer': 'https://www.yescoin.gold/',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0'
-        }
-    });
-
-    if (token) {
-        axiosInstance.defaults.headers['token'] = token;
-    }
-}
-
-async function loginWithTelegramApi(telegramAuthData) {
+async function login(encodedData) {
+    const url = 'https://api-backend.yescoin.gold/user/login';
+    const formattedPayload = { code: decodeURIComponent(encodedData) };
     try {
-        console.log('[INFO] Data sent to YesCoin for login:', telegramAuthData);
-
-        const loginPayload = {
-            id: telegramAuthData.id.toString(),  
-            first_name: telegramAuthData.first_name,
-            username: telegramAuthData.username
-        };
-
-        const apiBaseUrl = 'https://api-backend.yescoin.gold'; 
-        const response = await axios.post(`${apiBaseUrl}/user/login`, loginPayload);
-        console.log("Response from YesCoin:", response.data);
-
-        if (response.data && response.data.token) {
-            setToken(response.data.token);
-            setupAxios(response.data.token);
+        const response = await axios.post(url, formattedPayload, { headers: headers() });
+        if (response.data.code === 0) {
+            return response.data.data.token;
         } else {
-            console.error("Token not found in response:", response.data);
+            throw new Error(`Login failed: ${response.data.message}`);
         }
     } catch (error) {
-        console.error('Error during YesCoin login:', error.message);
+        throw new Error(`Login failed: ${error.message}`);
     }
 }
 
-async function getUserInfo() {
+async function getAccountInfo(token) {
+    const url = 'https://api.yescoin.gold/account/getAccountInfo';
     try {
-        const response = await axiosInstance.get('/user/info');
-        console.log('User info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting user info:', error.message);
-        throw error;
-    }
-}
-
-async function collectCoin() {
-    try {
-        const response = await axiosInstance.post('/game/collectCoin');
-        console.log('Coin collected:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error collecting coin:', error.message);
-        throw error;
-    }
-}
-
-async function getCommonTaskList() {
-    try {
-        const response = await axiosInstance.get('/task/getCommonTaskList');
-        console.log('Common task list:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting common task list:', error.message);
-        throw error;
-    }
-}
-
-async function finishTask(taskId) {
-    try {
-        const response = await axiosInstance.post('/task/finishTask', { taskId });
-        console.log('Task finished:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error finishing task:', error.message);
-        throw error;
-    }
-}
-
-async function getGameInfo() {
-    try {
-        const response = await axiosInstance.get('/game/getGameInfo');
-        console.log('Game info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting game info:', error.message);
-        throw error;
-    }
-}
-
-async function getAccountInfo() {
-    try {
-        const response = await axiosInstance.get('/account/getAccountInfo');
-        console.log('Account info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting account info:', error.message);
-        throw error;
-    }
-}
-
-async function specialBoxReloadPage() {
-    try {
-        const response = await axiosInstance.post('/game/specialBoxReloadPage');
-        console.log('Special box reloaded:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error reloading special box:', error.message);
-        throw error;
-    }
-}
-
-async function getSpecialBoxInfo() {
-    try {
-        const response = await axiosInstance.get('/game/getSpecialBoxInfo');
-        console.log('Special box info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting special box info:', error.message);
-        throw error;
-    }
-}
-
-async function collectSpecialBoxCoin() {
-    try {
-        const response = await axiosInstance.post('/game/collectSpecialBoxCoin');
-        console.log('Special box coin collected:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error collecting special box coin:', error.message);
-        throw error;
-    }
-}
-
-async function getWallet() {
-    try {
-        const response = await axiosInstance.get('/wallet/getWallet');
-        console.log('Wallet info:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error getting wallet info:', error.message);
-        throw error;
-    }
-}
-
-async function login(loginData) {
-    try {
-        const response = await axiosInstance.post('/user/login', loginData);
-        console.log('Login successful:', response.data);
-        if (response.data.token) {
-            setToken(response.data.token);
+        const response = await axios.get(url, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
         }
-        return response.data;
+        return null;
     } catch (error) {
-        console.error('Error logging in:', error.message);
-        throw error;
+        return null;
     }
 }
 
-async function finishDailyMission(missionData) {
+async function getGameInfo(token) {
+    const url = 'https://api.yescoin.gold/game/getGameInfo';
     try {
-        const response = await axiosInstance.post('/mission/finishDailyMission', missionData);
-        console.log('Daily mission finished:', response.data);
-        return response.data;
+        const response = await axios.get(url, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
+        }
+        return null;
     } catch (error) {
-        console.error('Error finishing daily mission:', error.message);
-        throw error;
+        return null;
+    }
+}
+
+async function getAccountBuildInfo(token) {
+    const url = 'https://api.yescoin.gold/build/getAccountBuildInfo';
+    try {
+        const response = await axios.get(url, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
+        } else {
+            console.log(`API Error: ${response.data.message}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error fetching account build info: ${error.message}`);
+        return null;
+    }
+}
+
+async function getSquadInfo(token) {
+    const url = 'https://api.yescoin.gold/squad/mySquad';
+    try {
+        const response = await axios.get(url, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function joinSquad(token, squadLink) {
+    const url = 'https://api.yescoin.gold/squad/joinSquad';
+    const data = { squadTgLink: squadLink };
+    try {
+        const response = await axios.post(url, data, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function collectCoin(token, amount) {
+    const url = 'https://api.yescoin.gold/game/collectCoin';
+    try {
+        const response = await axios.post(url, amount, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function useSpecialBox(token) {
+    const url = 'https://api.yescoin.gold/game/recoverSpecialBox';
+    try {
+        const response = await axios.post(url, {}, { headers: headers(token) });
+        return response.data.code === 0;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function recoverCoinPool(token) {
+    const url = 'https://api.yescoin.gold/game/recoverCoinPool';
+    try {
+        const response = await axios.post(url, {}, { headers: headers(token) });
+        return response.data.code === 0;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function getTaskList(token) {
+    const url = 'https://api.yescoin.gold/task/getCommonTaskList';
+    try {
+        const response = await axios.get(url, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data.data;
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function finishTask(token, taskId) {
+    const url = 'https://api.yescoin.gold/task/finishTask';
+    try {
+        const response = await axios.post(url, taskId, { headers: headers(token) });
+        return response.data.code === 0;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function upgradeLevel(token, upgradeType) {
+    const url = 'https://api.yescoin.gold/build/levelUp';
+    try {
+        const response = await axios.post(url, upgradeType, { headers: headers(token) });
+        return response.data.code === 0;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function getOfflineYesPacBonusInfo(token) {
+    const url = 'https://api.yescoin.gold/game/getOfflineYesPacBonusInfo';
+    try {
+        const response = await axios.get(url, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function claimOfflineBonus(token, claimData) {
+    const url = 'https://api.yescoin.gold/game/claimOfflineBonus';
+    try {
+        const response = await axios.post(url, claimData, { headers: headers(token) });
+        if (response.data.code === 0) {
+            return response.data;
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function toggleSwipeBotSwitch(token, status) {
+    const url = 'https://api.yescoin.gold/build/toggleSwipeBotSwitch';
+    try {
+        const response = await axios.post(url, status, { headers: headers(token) });
+        return response.data.code === 0;
+    } catch (error) {
+        return false;
     }
 }
 
 module.exports = {
-    setupAxios,
-    loginWithTelegramApi,
-    getUserInfo,
-    collectCoin,
-    getCommonTaskList,
-    finishTask,
-    getGameInfo,
-    getAccountInfo,
-    specialBoxReloadPage,
-    getSpecialBoxInfo,
-    collectSpecialBoxCoin,
-    getWallet,
     login,
-    finishDailyMission
+    getAccountInfo,
+    getGameInfo,
+    getAccountBuildInfo,
+    getSquadInfo,
+    joinSquad,
+    collectCoin,
+    useSpecialBox,
+    recoverCoinPool,
+    getTaskList,
+    finishTask,
+    upgradeLevel,
+    getOfflineYesPacBonusInfo,
+    claimOfflineBonus,
+    toggleSwipeBotSwitch
 };
