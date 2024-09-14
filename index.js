@@ -1,41 +1,16 @@
 const fs = require('fs');
-const {
-    login,
-    getAccountInfo,
-    getGameInfo,
-    getAccountBuildInfo,
-    getSquadInfo,
-    joinSquad,
-    collectCoin,
-    useSpecialBox,
-    recoverCoinPool,
-    getTaskList,
-    finishTask,
-    upgradeLevel,
-    getOfflineYesPacBonusInfo,
-    claimOfflineBonus,
-    toggleSwipeBotSwitch
-} = require('./src/api');
+const { login, getAccountInfo, getGameInfo, getAccountBuildInfo, getSquadInfo, joinSquad, collectCoin, useSpecialBox, recoverCoinPool, getTaskList, finishTask, upgradeLevel, getOfflineYesPacBonusInfo, claimOfflineBonus, toggleSwipeBotSwitch } = require('./src/api');
 const { displayLogo, displayAccountInfo, displayGameInfo, autoCollectCoins } = require('./src/display');
-
-const COLORS = {
-    RESET: '\x1b[0m',
-    GREEN: '\x1b[32m',
-    RED: '\x1b[31m',
-    YELLOW: '\x1b[33m',
-    CYAN: '\x1b[36m',
-};
-
-const getCurrentTimestamp = () => new Date().toISOString();
 
 class YesCoinBot {
     constructor() {
-        this.accounts = this.loadAccounts('token.txt');
+        this.accounts = this.loadAccounts('user.txt');
         this.tokens = this.loadTokens('token.json');
         this.cekTaskEnable = true;
         this.upgradeMultiEnable = true;
         this.upgradeFillEnable = true;
         this.maxLevel = 5;
+        this.totalCoinsCollected = 0;
     }
 
     loadAccounts(filePath) {
@@ -70,23 +45,11 @@ class YesCoinBot {
         await new Promise(resolve => setTimeout(resolve, delay));
     }
 
-    logInfo(message) {
-        console.log(`${COLORS.CYAN}[INFO] ${getCurrentTimestamp()}: ${message}${COLORS.RESET}`);
-    }
-
-    logError(message) {
-        console.error(`${COLORS.RED}[ERROR] ${getCurrentTimestamp()}: ${message}${COLORS.RESET}`);
-    }
-
-    logSuccess(message) {
-        console.log(`${COLORS.GREEN}[SUCCESS] ${getCurrentTimestamp()}: ${message}${COLORS.RESET}`);
-    }
-
     async handleSwipeBot(token) {
         try {
             const accountBuildInfo = await getAccountBuildInfo(token);
             if (accountBuildInfo === null) {
-                this.logError('Failed to retrieve SwipeBot information. API returned null.');
+                console.log('Error: Failed to retrieve SwipeBot information. API returned null.');
                 return;
             }
 
@@ -94,16 +57,16 @@ class YesCoinBot {
                 const { swipeBotLevel, openSwipeBot } = accountBuildInfo.data;
                 if (swipeBotLevel < 1) {
                     await upgradeLevel(token, 4);
-                    this.logSuccess('SwipeBot purchased successfully');
+                    console.log('SwipeBot purchased successfully');
                 }
                 if (swipeBotLevel >= 1 && !openSwipeBot) {
                     await toggleSwipeBotSwitch(token, true);
-                    this.logSuccess('SwipeBot activated successfully');
+                    console.log('SwipeBot activated successfully');
                 }
                 if (swipeBotLevel >= 1 && openSwipeBot) {
                     const offlineBonusInfo = await getOfflineYesPacBonusInfo(token);
                     if (offlineBonusInfo === null) {
-                        this.logError('Failed to retrieve offline bonus information.');
+                        console.log('Error: Failed to retrieve offline bonus information.');
                         return;
                     }
                     if (offlineBonusInfo.code === 0 && offlineBonusInfo.data.length > 0) {
@@ -115,27 +78,29 @@ class YesCoinBot {
                         };
                         const claimResponse = await claimOfflineBonus(token, claimData);
                         if (claimResponse === null) {
-                            this.logError('Failed to claim offline bonus. API returned null.');
+                            console.log('Error: Failed to claim offline bonus. API returned null.');
                             return;
                         }
                         if (claimResponse.code === 0) {
-                            this.logSuccess(`Claimed offline bonus successfully, received ${claimResponse.data.collectAmount} coins`);
+                            console.log(`Claimed offline bonus successfully, received ${claimResponse.data.collectAmount} coins`);
+                            this.totalCoinsCollected += claimResponse.data.collectAmount;
                         } else {
-                            this.logError('Failed to claim offline bonus');
+                            console.log('Failed to claim offline bonus');
                         }
                     }
                 }
             } else {
-                this.logError(`Unexpected response code ${accountBuildInfo.code}`);
+                console.log(`Error: Unexpected response code ${accountBuildInfo.code}`);
             }
         } catch (error) {
-            this.logError(`Error handling SwipeBot: ${error.message}`);
+            console.log(`Error handling SwipeBot: ${error.message}`);
         }
     }
 
     async main() {
         displayLogo();
         while (true) {
+            let totalCoins = 0;
             for (let i = 0; i < this.accounts.length; i++) {
                 const accountIndex = (i + 1).toString();
                 const encodedData = this.accounts[i];
@@ -143,43 +108,42 @@ class YesCoinBot {
                 try {
                     token = await this.getOrRefreshToken(encodedData, accountIndex);
                 } catch (error) {
-                    this.logError(`Unable to get token for account ${accountIndex}: ${error.message}`);
+                    console.log(`Unable to get token for account ${accountIndex}: ${error.message}`);
                     continue;
                 }
                 await this.randomDelay();
                 await displayAccountInfo(token);
                 await displayGameInfo(token);
-
+                
                 await this.randomDelay();
                 const squadInfo = await getSquadInfo(token);
                 if (squadInfo && squadInfo.data.isJoinSquad) {
-                    this.logInfo(`You have joined ${squadInfo.data.squadInfo.squadTitle} | ${squadInfo.data.squadInfo.squadMembers} Members`);
+                    console.log(`You have joined ${squadInfo.data.squadInfo.squadTitle} | ${squadInfo.data.squadInfo.squadMembers} Members`);
                 } else {
-                    this.logInfo('Squad: You are not in a Squad, joining wolvesbase.');
+                    console.log('Squad: You are not in a Squad, joining wolvesbase.');
                     await this.randomDelay();
                     const joinResult = await joinSquad(token, "t.me/wolvesbase");
                     if (joinResult) {
-                        this.logSuccess('Squad: Joined Squad successfully!');
+                        console.log(`Squad: Joined Squad successfully!`);
                     } else {
-                        this.logError('Squad: Failed to join Squad!');
+                        console.log(`Squad: Failed to join Squad!`);
                     }
                 }
 
                 await this.randomDelay();
-                this.logInfo('Checking and handling SwipeBot...');
+                console.log('Checking and handling SwipeBot...');
                 await this.handleSwipeBot(token);
 
                 if (this.cekTaskEnable) {
                     await this.randomDelay();
-                    this.logInfo('Starting tasks...');
+                    console.log('Starting tasks...');
                     const tasks = await getTaskList(token);
                     if (tasks) {
                         for (const task of tasks) {
                             if (task.taskStatus === 0) {
                                 await finishTask(token, task.taskId);
-                                this.logSuccess(`Task ${task.taskId} completed`);
                             } else {
-                                this.logInfo('Task already completed');
+                                console.log('Task already completed');
                             }
                         }
                     }
@@ -187,55 +151,53 @@ class YesCoinBot {
 
                 if (this.upgradeMultiEnable) {
                     await this.randomDelay();
-                    this.logInfo('Starting multi upgrade...');
+                    console.log('Starting multi upgrade...');
                     await upgradeLevel(token, this.maxLevel, '1');
-                    this.logSuccess('Multi upgrade completed');
                 }
 
                 if (this.upgradeFillEnable) {
                     await this.randomDelay();
-                    this.logInfo('Starting Fill Rate upgrade...');
+                    console.log('Starting Fill Rate upgrade...');
                     await upgradeLevel(token, this.maxLevel, '2');
-                    this.logSuccess('Fill Rate upgrade completed');
                 }
 
                 await this.randomDelay();
                 const collectInfo = await getGameInfo(token);
                 if (collectInfo === null) {
-                    this.logError('Unable to get game data!');
+                    console.log('Unable to get game data!');
                     continue;
                 } else {
                     const { singleCoinValue, coinPoolLeftCount } = collectInfo.data;
-                    this.logInfo(`Energy left ${coinPoolLeftCount}`);
+                    console.log(`Energy left ${coinPoolLeftCount}`);
 
                     if (coinPoolLeftCount > 0) {
                         await this.randomDelay();
                         const amount = Math.floor(coinPoolLeftCount / singleCoinValue);
                         const collectResult = await collectCoin(token, amount);
                         if (collectResult && collectResult.code === 0) {
-                            this.logSuccess(`Tap successful, received ${collectResult.data.collectAmount} coins`);
+                            console.log(`Tap successful, received ${collectResult.data.collectAmount} coins`);
+                            totalCoins += collectResult.data.collectAmount;
                         } else {
-                            this.logError('Tap unsuccessful!');
+                            console.log('Tap unsuccessful!');
                         }
                     }
                 }
 
                 await this.randomDelay();
-                this.logInfo('Checking remaining chests...');
+                console.log('Checking remaining chests...');
                 const gameInfo = await getAccountBuildInfo(token);
                 if (gameInfo && gameInfo.data.specialBoxLeftRecoveryCount > 0) {
                     if (await useSpecialBox(token)) {
                         await this.randomDelay();
-                        this.logInfo('Starting collection...');
+                        console.log('Starting collection...');
                         await autoCollectCoins(token, 2, 240);
-                        this.logSuccess('Collection completed');
                     }
                 } else {
-                    this.logInfo('No chests available!');
+                    console.log('No chests available!');
                 }
 
                 await this.randomDelay();
-                this.logInfo('Starting recovery...');
+                console.log('Starting recovery...');
                 const updatedGameInfo = await getAccountBuildInfo(token);
                 if (updatedGameInfo && updatedGameInfo.data.coinPoolLeftRecoveryCount > 0) {
                     if (await recoverCoinPool(token)) {
@@ -248,23 +210,31 @@ class YesCoinBot {
                                 const amount = Math.floor(coinPoolLeftCount / singleCoinValue);
                                 const collectResult = await collectCoin(token, amount);
                                 if (collectResult && collectResult.code === 0) {
-                                    this.logSuccess(`Tap successful, received ${collectResult.data.collectAmount} coins`);
+                                    console.log(`Tap successful, received ${collectResult.data.collectAmount} coins`);
+                                    totalCoins += collectResult.data.collectAmount;
                                 } else {
-                                    this.logError('Tap unsuccessful!');
+                                    console.log('Tap unsuccessful!');
                                 }
                             }
                         }
                     }
                 } else {
-                    this.logInfo('No more recovery available!');
+                    console.log('No more recovery available!');
                 }
 
                 await this.randomDelay();
-                this.logInfo('Checking for free chest...');
+                console.log('Checking for free chest...');
                 await autoCollectCoins(token, 100000, 200);
             }
 
-            this.logInfo('Waiting for 2 minutes before next cycle...');
+            // Display summary at the end of each cycle
+            console.log('==============================================');
+            console.log(`Total accounts processed: ${this.accounts.length}`);
+            console.log(`Total coins collected this cycle: ${totalCoins}`);
+            console.log(`Total coins collected overall: ${this.totalCoinsCollected}`);
+            console.log('==============================================');
+
+            console.log('Waiting for 2 minutes before next cycle...');
             await new Promise(resolve => setTimeout(resolve, 2 * 60 * 1000));
         }
     }
