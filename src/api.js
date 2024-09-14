@@ -1,6 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
-const { getStoredToken, setToken } = require('./headers');
+const { getStoredToken, setToken } = require('./config');
 
 let axiosInstance = null;
 
