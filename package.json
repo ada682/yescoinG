@@ -1,0 +1,19 @@
+{
+  "name": "yescoinbot",
+  "version": "1.0.0",
+  "description": "A bot for automating tasks in YesCoin game.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^0.27.2", 
+    "figlet": "^1.5.2" 
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "slyntherinnn",
+  "license": "ISC"
+}
