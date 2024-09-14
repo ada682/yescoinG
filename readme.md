@@ -40,8 +40,10 @@ user.txt: List of user accounts (one per line).
 ## Contributing
 Feel free to submit issues or pull requests. Contributions are welcome!
 
-## License
-This project is licensed under the MIT License - see the ## Usage
+License
+This project is licensed under the MIT License.
+
+## Usage
 npm start
 
 ## Configuration Files:
