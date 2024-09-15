@@ -2,7 +2,6 @@ const fs = require('fs');
 const { login, getAccountInfo, getGameInfo, getAccountBuildInfo, getSquadInfo, joinSquad, collectCoin, useSpecialBox, recoverCoinPool, getTaskList, finishTask, upgradeLevel, getOfflineYesPacBonusInfo, claimOfflineBonus, toggleSwipeBotSwitch } = require('./src/api');
 const { displayLogo, displayAccountInfo, displayGameInfo, autoCollectCoins } = require('./src/display');
 
-// ANSI Escape Codes for coloring
 const COLORS = {
     RESET: '\x1b[0m',
     RED: '\x1b[31m',
