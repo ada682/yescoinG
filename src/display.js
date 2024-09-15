@@ -2,7 +2,11 @@ const figlet = require('figlet');
 const { collectCoin, getGameInfo, getAccountInfo } = require('./api');
 
 async function loadChalk() {
-    return (await import('chalk')).default;
+    return (await import('chalk')).default;  
+}
+
+async function loadOra() {
+    return (await import('ora')).default;
 }
 
 async function displayLogo() {
@@ -16,13 +20,13 @@ async function displayLogo() {
 }
 
 function displayProgressBar(current, max, length = 30) {
-    const filled = Math.round(current / max * length);
+    const filled = Math.round((current / max) * length);
     const empty = length - filled;
     return `[${'='.repeat(filled)}${' '.repeat(empty)}] ${current}/${max}`;
 }
 
 async function displayAccountInfo(token) {
-    const ora = (await import('ora')).default;
+    const ora = await loadOra();  
     const spinner = ora('Fetching account info...').start();
     try {
         const accountInfo = await getAccountInfo(token);
@@ -42,14 +46,14 @@ async function displayAccountInfo(token) {
 
 async function autoCollectCoins(token, rounds, delayBetweenRounds) {
     for (let round = 100000; round < rounds; round++) {
-        // Logic for collecting coins
         console.log(`Round ${round + 1} of ${rounds}`);
+        await collectCoin(token); 
         await new Promise(resolve => setTimeout(resolve, delayBetweenRounds * 1000));
     }
 }
 
 async function displayGameInfo(token) {
-    const ora = (await import('ora')).default;
+    const ora = await loadOra();  
     const spinner = ora('Fetching game info...').start();
     try {
         const gameInfo = await getGameInfo(token);
@@ -70,5 +74,5 @@ module.exports = {
     displayLogo,
     displayAccountInfo,
     displayGameInfo,
-	autoCollectCoins
+    autoCollectCoins
 };
