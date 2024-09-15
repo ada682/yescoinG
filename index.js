@@ -18,7 +18,7 @@ class YesCoinBot {
         this.upgradeMultiEnable = true;
         this.upgradeFillEnable = true;
         this.maxLevel = 5;
-        this.totalCoinsCollected = 0;
+        this.totalCoinsCollectedAllTime = 0;
         this.totalBalanceAcrossAccounts = 0;
     }
 
@@ -92,7 +92,7 @@ class YesCoinBot {
                         }
                         if (claimResponse.code === 0) {
                             console.log(`${COLORS.GREEN}Claimed offline bonus successfully, received ${claimResponse.data.collectAmount} coins${COLORS.RESET}`);
-                            this.totalCoinsCollected += claimResponse.data.collectAmount;
+                            this.totalCoinsCollectedAllTime += claimResponse.data.collectAmount;
                         } else {
                             console.log(`${COLORS.RED}Failed to claim offline bonus${COLORS.RESET}`);
                         }
@@ -108,7 +108,9 @@ class YesCoinBot {
 
     async main() {
         displayLogo();
+        let cycleCount = 0;
         while (true) {
+            cycleCount++;
             let totalCoinsThisCycle = 0;
             this.totalBalanceAcrossAccounts = 0;
 
@@ -176,7 +178,6 @@ class YesCoinBot {
                 const collectInfo = await getGameInfo(token);
                 if (collectInfo === null) {
                     console.log(`${COLORS.RED}Unable to get game data!${COLORS.RESET}`);
-                    continue;
                 } else {
                     const { singleCoinValue, coinPoolLeftCount } = collectInfo.data;
                     console.log(`${COLORS.BLUE}Energy left ${coinPoolLeftCount}${COLORS.RESET}`);
@@ -186,8 +187,10 @@ class YesCoinBot {
                         const amount = Math.floor(coinPoolLeftCount / singleCoinValue);
                         const collectResult = await collectCoin(token, amount);
                         if (collectResult && collectResult.code === 0) {
-                            console.log(`${COLORS.GREEN}Tap successful, received ${collectResult.data.collectAmount} coins${COLORS.RESET}`);
-                            totalCoinsThisCycle += collectResult.data.collectAmount;
+                            const coinsCollected = collectResult.data.collectAmount;
+                            totalCoinsThisCycle += coinsCollected;
+                            this.totalCoinsCollectedAllTime += coinsCollected;
+                            console.log(`${COLORS.GREEN}Tap successful, received ${coinsCollected} coins${COLORS.RESET}`);
                         } else {
                             console.log(`${COLORS.RED}Tap unsuccessful!${COLORS.RESET}`);
                         }
@@ -201,7 +204,11 @@ class YesCoinBot {
                     if (await useSpecialBox(token)) {
                         await this.randomDelay();
                         console.log(`${COLORS.BLUE}Starting collection...${COLORS.RESET}`);
-                        await autoCollectCoins(token, 2, 240);
+                        const autoCollectResult = await autoCollectCoins(token, 2, 240);
+                        if (autoCollectResult && autoCollectResult.coinsCollected) {
+                            totalCoinsThisCycle += autoCollectResult.coinsCollected;
+                            this.totalCoinsCollectedAllTime += autoCollectResult.coinsCollected;
+                        }
                     }
                 } else {
                     console.log(`${COLORS.YELLOW}No chests available!${COLORS.RESET}`);
@@ -221,8 +228,10 @@ class YesCoinBot {
                                 const amount = Math.floor(coinPoolLeftCount / singleCoinValue);
                                 const collectResult = await collectCoin(token, amount);
                                 if (collectResult && collectResult.code === 0) {
-                                    console.log(`${COLORS.GREEN}Tap successful, received ${collectResult.data.collectAmount} coins${COLORS.RESET}`);
-                                    totalCoinsThisCycle += collectResult.data.collectAmount;
+                                    const coinsCollected = collectResult.data.collectAmount;
+                                    totalCoinsThisCycle += coinsCollected;
+                                    this.totalCoinsCollectedAllTime += coinsCollected;
+                                    console.log(`${COLORS.GREEN}Tap successful, received ${coinsCollected} coins${COLORS.RESET}`);
                                 } else {
                                     console.log(`${COLORS.RED}Tap unsuccessful!${COLORS.RESET}`);
                                 }
@@ -235,20 +244,32 @@ class YesCoinBot {
 
                 await this.randomDelay();
                 console.log(`${COLORS.BLUE}Checking for free chest...${COLORS.RESET}`);
-                await autoCollectCoins(token, 100000, 200);
+                const freeChestResult = await autoCollectCoins(token, 100000, 200);
+                if (freeChestResult && freeChestResult.coinsCollected) {
+                    totalCoinsThisCycle += freeChestResult.coinsCollected;
+                    this.totalCoinsCollectedAllTime += freeChestResult.coinsCollected;
+                }
 
-                const accountInfo = await getAccountInfo(token);
-                if (accountInfo && accountInfo.data) {
-                    const accountBalance = accountInfo.data.balance;
-                    this.totalBalanceAcrossAccounts += accountBalance;
+                try {
+                    const accountInfo = await getAccountInfo(token);
+                    if (accountInfo && accountInfo.data && typeof accountInfo.data.balance === 'number') {
+                        const accountBalance = accountInfo.data.balance;
+                        this.totalBalanceAcrossAccounts += accountBalance;
+                        console.log(`${COLORS.BLUE}Account ${accountIndex} balance: ${accountBalance}${COLORS.RESET}`);
+                    } else {
+                        console.log(`${COLORS.RED}Invalid balance data for account ${accountIndex}${COLORS.RESET}`);
+                    }
+                } catch (error) {
+                    console.log(`${COLORS.RED}Error retrieving balance for account ${accountIndex}: ${error.message}${COLORS.RESET}`);
                 }
             }
 
             console.log('==============================================');
+            console.log(`${COLORS.YELLOW}Cycle #${cycleCount}${COLORS.RESET}`);
             console.log(`${COLORS.YELLOW}Total accounts processed: ${this.accounts.length}${COLORS.RESET}`);
-            console.log(`${COLORS.YELLOW}Total balance across all accounts: ${this.totalBalanceAcrossAccounts}${COLORS.RESET}`);
+            console.log(`${COLORS.YELLOW}Total balance across all accounts: ${this.totalBalanceAcrossAccounts.toFixed(2)}${COLORS.RESET}`);
             console.log(`${COLORS.YELLOW}Total coins collected this cycle: ${totalCoinsThisCycle}${COLORS.RESET}`);
-            console.log(`${COLORS.YELLOW}Total coins collected overall: ${this.totalCoinsCollected}${COLORS.RESET}`);
+            console.log(`${COLORS.YELLOW}Total coins collected overall (all cycles, all accounts): ${this.totalCoinsCollectedAllTime}${COLORS.RESET}`);
             console.log('==============================================');
 
             console.log(`${COLORS.YELLOW}Waiting for 2 minutes before next cycle...${COLORS.RESET}`);
@@ -258,4 +279,6 @@ class YesCoinBot {
 }
 
 const bot = new YesCoinBot();
-bot.main();
+bot.main().catch(error => {
+    console.error('An error occurred:', error);
+});
