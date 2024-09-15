@@ -1,0 +1,1 @@
+user=%7B%22id%22%3A1118770958%2C%22first_name%22%3A%22zyungzao%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22slyn%22%2C%22language_code%22%3A%22en%22%2C%22allows_write_to_pm%22%3Atrue%7D&chat_instance=747512179666311990&chat_type=sender&auth_date=1726336624&hash=2f10e44a9c669079e820a24c46759981647e16f1129df1fa17eae991cd9
