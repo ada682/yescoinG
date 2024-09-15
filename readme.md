@@ -1,3 +1,5 @@
+not finish
+
 # YesCoin Bot
 
 A Node.js bot for automating tasks in the YesCoin game.
